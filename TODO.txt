@@ -1,0 +1,4 @@
+- See https://github.com/KamilLelonek/k8s-gcp-terraform for setting up Terraform with a backend, etc
+- See https://www.weave.works/technologies/weaveworks-on-aws/ for general philosophy
+- See for more comprehensive https://elastisys.com/2019/04/12/kubernetes-on-gke-from-scratch-using-terraform/
+
