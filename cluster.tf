@@ -1,6 +1,8 @@
 resource "google_container_cluster" "cluster" {
-  name               = var.cluster_name
-  location           = var.region
+  provider = "google-beta"
+
+  name     = var.cluster_name
+  location = var.region
 
   # We use separately managed node pool(s) as per the recommendation
   # (https://www.terraform.io/docs/providers/google/r/container_cluster.html). To allow
@@ -17,6 +19,13 @@ resource "google_container_cluster" "cluster" {
       issue_client_certificate = false
     }
   }
+
+  addons_config {
+    istio_config {
+      disabled = false
+      auth = "AUTH_MUTUAL_TLS"
+    }
+  }
 }
 
 resource "google_container_node_pool" "general_purpose_node_pool" {
@@ -25,8 +34,8 @@ resource "google_container_node_pool" "general_purpose_node_pool" {
   cluster    = google_container_cluster.cluster.name
 
   management {
-    auto_repair = "true"
-    auto_upgrade = "true"
+    auto_repair = true
+    auto_upgrade = true
   }
 
   autoscaling {
