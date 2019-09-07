@@ -25,6 +25,11 @@ apply:
 	@echo "\n$(ok_color)====> Running Terraform apply$(no_color)"
 	terraform apply $(plan_file)
 
+.PHONY: destroy
+destroy:
+	@echo "\n$(ok_color)====> Running Terraform destroy$(no_color)"
+	terraform destroy -var-file=$(var_file)
+
 .PHONY: shellcheck
 shellcheck:
 	@echo "\n$(ok_color)====> Running shellcheck$(no_color)"
