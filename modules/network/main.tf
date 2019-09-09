@@ -1,8 +1,12 @@
 // VPC
 resource "aws_vpc" "cluster_vpc" {
-  cidr_block           = var.cluster_vpc_cidr
+  cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
+
+  tags = {
+    Name = "${var.name_prefix}-vpc"
+  }
 }
 
 // Internet gateway
@@ -17,11 +21,15 @@ resource "aws_eip" "nat_gateway_eip_a" {
 
 // Elastic IP for NAT gateway in AZB
 resource "aws_eip" "nat_gateway_eip_b" {
+  // Only provision a NAT in each AZ if production_mode is enabled
+  count = var.production_mode ? 1 : 0
   vpc = true
 }
 
 // Elastic IP for NAT gateway in AZC
 resource "aws_eip" "nat_gateway_eip_c" {
+  // Only provision a NAT in each AZ if production_mode is enabled
+  count = var.production_mode ? 1 : 0
   vpc = true
 }
 
@@ -33,7 +41,7 @@ resource "aws_nat_gateway" "nat_gateway_a" {
 
 // NAT gateway in AZB
 resource "aws_nat_gateway" "nat_gateway_b" {
-  // We only provision a NAT in each AZ if production_mode is enabled
+  // Only provision a NAT in each AZ if production_mode is enabled
   count = var.production_mode ? 1 : 0
   allocation_id = aws_eip.nat_gateway_eip_b.id
   subnet_id     = aws_subnet.public_subnet_b.id
@@ -41,7 +49,7 @@ resource "aws_nat_gateway" "nat_gateway_b" {
 
 // NAT gateway in AZC
 resource "aws_nat_gateway" "nat_gateway_c" {
-  // We only provision a NAT in each AZ if production_mode is enabled
+  // Only provision a NAT in each AZ if production_mode is enabled
   count = var.production_mode ? 1 : 0
   allocation_id = aws_eip.nat_gateway_eip_c.id
   subnet_id     = aws_subnet.public_subnet_c.id
@@ -50,44 +58,44 @@ resource "aws_nat_gateway" "nat_gateway_c" {
 // Public subnet in AZA
 resource "aws_subnet" "public_subnet_a" {
   vpc_id            = aws_vpc.cluster_vpc.id
-  cidr_block        = var.cluster_public_subnet_a_cidr
+  cidr_block        = var.public_subnet_a_cidr
   availability_zone = "${var.region}a"
 
   tags = {
-    Name = "${var.cluster_name}-cluster-public-subnet-a"
+    Name = "${var.name_prefix}-public-subnet-a"
   }
 }
 
 // Public subnet in AZB
 resource "aws_subnet" "public_subnet_b" {
   vpc_id            = aws_vpc.cluster_vpc.id
-  cidr_block        = var.cluster_public_subnet_b_cidr
+  cidr_block        = var.public_subnet_b_cidr
   availability_zone = "${var.region}b"
 
   tags = {
-    Name = "${var.cluster_name}-cluster-public-subnet-b"
+    Name = "${var.name_prefix}-public-subnet-b"
   }
 }
 
 // Public subnet in AZC
 resource "aws_subnet" "public_subnet_c" {
   vpc_id            = aws_vpc.cluster_vpc.id
-  cidr_block        = var.cluster_public_subnet_c_cidr
+  cidr_block        = var.public_subnet_c_cidr
   availability_zone = "${var.region}c"
 
   tags = {
-    Name = "${var.cluster_name}-cluster-public-subnet-c"
+    Name = "${var.name_prefix}-public-subnet-c"
   }
 }
 
 // Private subnet in AZA
 resource "aws_subnet" "private_subnet_a" {
   vpc_id            = aws_vpc.cluster_vpc.id
-  cidr_block        = var.cluster_private_subnet_a_cidr
+  cidr_block        = var.private_subnet_a_cidr
   availability_zone = "${var.region}a"
 
   tags = {
-    Name = "${var.cluster_name}-cluster-private-subnet-a"
+    Name = "${var.name_prefix}-private-subnet-a"
 
     // Let EKS know to create internal ELBs here
     "kubernetes.io/role/internal-elb" = 1
@@ -97,11 +105,11 @@ resource "aws_subnet" "private_subnet_a" {
 // Private subnet in AZB
 resource "aws_subnet" "private_subnet_b" {
   vpc_id            = aws_vpc.cluster_vpc.id
-  cidr_block        = var.cluster_private_subnet_b_cidr
+  cidr_block        = var.private_subnet_b_cidr
   availability_zone = "${var.region}b"
 
   tags = {
-    Name = "${var.cluster_name}-cluster-private-subnet-b"
+    Name = "${var.name_prefix}-private-subnet-b"
 
     // Let EKS know to create internal ELBs here
     "kubernetes.io/role/internal-elb" = 1
@@ -111,11 +119,11 @@ resource "aws_subnet" "private_subnet_b" {
 // Private subnet in AZC
 resource "aws_subnet" "private_subnet_c" {
   vpc_id            = aws_vpc.cluster_vpc.id
-  cidr_block        = var.cluster_private_subnet_c_cidr
+  cidr_block        = var.private_subnet_c_cidr
   availability_zone = "${var.region}c"
 
   tags = {
-    Name = "${var.cluster_name}-cluster-private-subnet-c"
+    Name = "${var.name_prefix}-private-subnet-c"
 
     // Let EKS know to create internal ELBs here
     "kubernetes.io/role/internal-elb" = 1
@@ -207,4 +215,3 @@ resource "aws_route_table_association" "private_route_table_association_c" {
   subnet_id      = aws_subnet.private_subnet_c.id
   route_table_id = aws_route_table.private_route_table_c.id
 }
-
